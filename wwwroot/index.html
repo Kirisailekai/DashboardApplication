@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель мониторинга погоды</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .chart-container {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .city-input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Панель мониторинга погоды</h1>
+        <div>
+            <input type="text" id="cityInput" class="city-input" placeholder="Введите город">
+            <button onclick="loadWeatherData()">Загрузить данные</button>
+        </div>
+        
+        <div class="chart-container">
+            <h2>Температура</h2>
+            <canvas id="temperatureChart"></canvas>
+        </div>
+        
+        <div class="chart-container">
+            <h2>Влажность</h2>
+            <canvas id="humidityChart"></canvas>
+        </div>
+        
+        <div class="chart-container">
+            <h2>Скорость ветра</h2>
+            <canvas id="windChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let temperatureChart, humidityChart, windChart;
+        
+        function createCharts(weatherData) {
+            const dates = weatherData.map(data => new Date(data.date).toLocaleDateString());
+            
+            // Температура
+            if (temperatureChart) temperatureChart.destroy();
+            temperatureChart = new Chart(
+                document.getElementById('temperatureChart'),
+                {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Температура (°C)',
+                            data: weatherData.map(data => data.temperature),
+                            borderColor: 'rgb(255, 99, 132)',
+                            tension: 0.1
+                        }]
+                    }
+                }
+            );
+            
+            // Влажность
+            if (humidityChart) humidityChart.destroy();
+            humidityChart = new Chart(
+                document.getElementById('humidityChart'),
+                {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Влажность (%)',
+                            data: weatherData.map(data => data.humidity),
+                            borderColor: 'rgb(54, 162, 235)',
+                            tension: 0.1
+                        }]
+                    }
+                }
+            );
+            
+            // Скорость ветра
+            if (windChart) windChart.destroy();
+            windChart = new Chart(
+                document.getElementById('windChart'),
+                {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Скорость ветра (м/с)',
+                            data: weatherData.map(data => data.windSpeed),
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        }]
+                    }
+                }
+            );
+        }
+        
+        async function loadWeatherData() {
+            const city = document.getElementById('cityInput').value;
+            if (!city) {
+                alert('Пожалуйста, введите название города');
+                return;
+            }
+            
+            try {
+                // Получаем текущую погоду
+                const currentResponse = await fetch(`/api/weather/${city}`);
+                if (!currentResponse.ok) throw new Error('Ошибка при получении текущей погоды');
+                
+                // Получаем историю
+                const historyResponse = await fetch(`/api/weather/history/${city}`);
+                if (!historyResponse.ok) throw new Error('Ошибка при получении истории');
+                
+                const historyData = await historyResponse.json();
+                createCharts(historyData);
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+        
+        // Загружаем данные для Москвы при старте
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('cityInput').value = 'Moscow';
+            loadWeatherData();
+        });
+    </script>
+</body>
+</html> 
