@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using DashboardApplication.Models;
 using DashboardApplication.Services;
+using DashboardApplication.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace DashboardApplication.Controllers
