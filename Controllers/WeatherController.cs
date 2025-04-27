@@ -18,34 +18,59 @@ namespace DashboardApplication.Controllers
 
         public WeatherController(WeatherService weatherService, WeatherContext context)
         {
-            _weatherService = weatherService;
-            _context = context;
+            _weatherService = weatherService ?? throw new ArgumentNullException(nameof(weatherService));
+            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         [HttpGet("{city}")]
         public async Task<ActionResult<WeatherData>> GetCurrentWeather(string city)
         {
+            if (string.IsNullOrWhiteSpace(city))
+            {
+                return BadRequest("City name cannot be empty");
+            }
+
             try
             {
                 var weatherData = await _weatherService.GetWeatherDataAsync(city);
                 return Ok(weatherData);
             }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
             catch (Exception ex)
             {
-                return BadRequest($"Ошибка при получении данных о погоде: {ex.Message}");
+                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
             }
         }
 
         [HttpGet("history/{city}")]
         public async Task<ActionResult<IEnumerable<WeatherData>>> GetWeatherHistory(string city)
         {
-            var oneWeekAgo = DateTime.Now.AddDays(-7);
-            var history = await _context.WeatherData
-                .Where(w => w.City == city && w.Date >= oneWeekAgo)
-                .OrderBy(w => w.Date)
-                .ToListAsync();
+            if (string.IsNullOrWhiteSpace(city))
+            {
+                return BadRequest("City name cannot be empty");
+            }
 
-            return Ok(history);
+            try
+            {
+                var oneWeekAgo = DateTime.Now.AddDays(-7);
+                var history = await _context.WeatherData
+                    .Where(w => w.City == city && w.Date >= oneWeekAgo)
+                    .OrderBy(w => w.Date)
+                    .ToListAsync();
+
+                return Ok(history);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred while retrieving weather history: {ex.Message}");
+            }
         }
     }
 } 
