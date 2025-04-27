@@ -8,8 +8,6 @@
 - Хранение истории погодных данных в базе данных SQLite
 - Возможность просмотра данных для любого города
 ## Установка и запуск
-git clone https://github.com/your-username/weather-dashboard.git
-cd weather-dashboard
 Получите API ключ на [OpenWeather](https://openweathermap.org/api)
 В файле `appsettings.json` замените `YOUR_API_KEY_HERE` на ваш API ключ:
 ```json
